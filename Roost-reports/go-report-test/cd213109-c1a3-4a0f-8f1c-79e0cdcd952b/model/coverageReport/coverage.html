@@ -1,0 +1,325 @@
+
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+		<title>model: Go Coverage Report</title>
+		<style>
+			body {
+				background: black;
+				color: rgb(80, 80, 80);
+			}
+			body, pre, #legend span {
+				font-family: Menlo, monospace;
+				font-weight: bold;
+			}
+			#topbar {
+				background: black;
+				position: fixed;
+				top: 0; left: 0; right: 0;
+				height: 42px;
+				border-bottom: 1px solid rgb(80, 80, 80);
+			}
+			#content {
+				margin-top: 50px;
+			}
+			#nav, #legend {
+				float: left;
+				margin-left: 10px;
+			}
+			#legend {
+				margin-top: 12px;
+			}
+			#nav {
+				margin-top: 10px;
+			}
+			#legend span {
+				margin: 0 5px;
+			}
+			.cov0 { color: rgb(192, 0, 0) }
+.cov1 { color: rgb(128, 128, 128) }
+.cov2 { color: rgb(116, 140, 131) }
+.cov3 { color: rgb(104, 152, 134) }
+.cov4 { color: rgb(92, 164, 137) }
+.cov5 { color: rgb(80, 176, 140) }
+.cov6 { color: rgb(68, 188, 143) }
+.cov7 { color: rgb(56, 200, 146) }
+.cov8 { color: rgb(44, 212, 149) }
+.cov9 { color: rgb(32, 224, 152) }
+.cov10 { color: rgb(20, 236, 155) }
+
+		</style>
+	</head>
+	<body>
+		<div id="topbar">
+			<div id="nav">
+				<select id="files">
+				
+				<option value="file0">github.com/raahii/golang-grpc-realworld-example/model/article.go (100.0%)</option>
+				
+				<option value="file1">github.com/raahii/golang-grpc-realworld-example/model/comment.go (100.0%)</option>
+				
+				<option value="file2">github.com/raahii/golang-grpc-realworld-example/model/user.go (91.7%)</option>
+				
+				</select>
+			</div>
+			<div id="legend">
+				<span>not tracked</span>
+			
+				<span class="cov0">not covered</span>
+				<span class="cov8">covered</span>
+			
+			</div>
+		</div>
+		<div id="content">
+		
+		<pre class="file" id="file0" style="display: none">package model
+
+import (
+        "fmt"
+
+        validation "github.com/go-ozzo/ozzo-validation"
+        "github.com/jinzhu/gorm"
+        pb "github.com/raahii/golang-grpc-realworld-example/proto"
+)
+
+const ISO8601 = "2006-01-02T15:04:05-0700Z"
+
+// Article model
+type Article struct {
+        gorm.Model
+        Title          string `gorm:"not null"`
+        Description    string `gorm:"not null"`
+        Body           string `gorm:"not null"`
+        Tags           []Tag  `gorm:"many2many:article_tags"`
+        Author         User   `gorm:"foreignkey:UserID"`
+        UserID         uint   `gorm:"not null"`
+        FavoritesCount int32  `gorm:"not null;default=0"`
+        FavoritedUsers []User `gorm:"many2many:favorite_articles"`
+        Comments       []Comment
+}
+
+// Validate validates fields of article model
+func (a Article) Validate() error <span class="cov8" title="1">{
+        return validation.ValidateStruct(&amp;a,
+                validation.Field(
+                        &amp;a.Title,
+                        validation.Required,
+                ),
+                validation.Field(
+                        &amp;a.Body,
+                        validation.Required,
+                ),
+                validation.Field(
+                        &amp;a.Tags,
+                        validation.Required,
+                ),
+        )
+}</span>
+
+// Overwrite overwrite each field if it's not zero-value
+func (a *Article) Overwrite(title, description, body string) <span class="cov8" title="1">{
+        if title != "" </span><span class="cov8" title="1">{
+                a.Title = title
+        }</span>
+
+        <span class="cov8" title="1">if description != "" </span><span class="cov8" title="1">{
+                a.Description = description
+        }</span>
+
+        <span class="cov8" title="1">if body != "" </span><span class="cov8" title="1">{
+                a.Body = body
+        }</span>
+}
+
+// ProtoArticle generates proto aritcle model from article
+func (a *Article) ProtoArticle(favorited bool) *pb.Article <span class="cov8" title="1">{
+        pa := pb.Article{
+                Slug:           fmt.Sprintf("%d", a.ID),
+                Title:          a.Title,
+                Description:    a.Description,
+                Body:           a.Body,
+                FavoritesCount: a.FavoritesCount,
+                Favorited:      favorited,
+                CreatedAt:      a.CreatedAt.Format(ISO8601),
+                UpdatedAt:      a.UpdatedAt.Format(ISO8601),
+        }
+
+        // article tags
+        tags := make([]string, 0, len(a.Tags))
+        for _, t := range a.Tags </span><span class="cov8" title="1">{
+                tags = append(tags, t.Name)
+        }</span>
+        <span class="cov8" title="1">pa.TagList = tags
+
+        // article dates
+
+        return &amp;pa</span>
+}
+
+// Tag model
+type Tag struct {
+        gorm.Model
+        Name string `gorm:"not null"`
+}
+</pre>
+		
+		<pre class="file" id="file1" style="display: none">package model
+
+import (
+        "fmt"
+
+        validation "github.com/go-ozzo/ozzo-validation"
+        "github.com/jinzhu/gorm"
+        pb "github.com/raahii/golang-grpc-realworld-example/proto"
+)
+
+// Comment model
+type Comment struct {
+        gorm.Model
+        Body      string `gorm:"not null"`
+        UserID    uint   `gorm:"not null"`
+        Author    User   `gorm:"foreignkey:UserID"`
+        ArticleID uint   `gorm:"not null"`
+        Article   Article
+}
+
+// Validate validates fields of comment model
+func (c Comment) Validate() error <span class="cov8" title="1">{
+        return validation.ValidateStruct(&amp;c,
+                validation.Field(
+                        &amp;c.Body,
+                        validation.Required,
+                ),
+        )
+}</span>
+
+// ProtoComment generates proto comment model from article
+func (c *Comment) ProtoComment() *pb.Comment <span class="cov8" title="1">{
+        return &amp;pb.Comment{
+                Id:        fmt.Sprintf("%d", c.ID),
+                Body:      c.Body,
+                CreatedAt: c.CreatedAt.Format(ISO8601),
+                UpdatedAt: c.UpdatedAt.Format(ISO8601),
+        }
+}</span>
+</pre>
+		
+		<pre class="file" id="file2" style="display: none">package model
+
+import (
+        "errors"
+        "regexp"
+
+        validation "github.com/go-ozzo/ozzo-validation"
+        "github.com/go-ozzo/ozzo-validation/is"
+        "github.com/jinzhu/gorm"
+        pb "github.com/raahii/golang-grpc-realworld-example/proto"
+        "golang.org/x/crypto/bcrypt"
+)
+
+// User is user model
+type User struct {
+        gorm.Model
+        Username         string    `gorm:"unique_index;not null"`
+        Email            string    `gorm:"unique_index;not null"`
+        Password         string    `gorm:"not null"`
+        Bio              string    `gorm:"not null"`
+        Image            string    `gorm:"not null"`
+        Follows          []User    `gorm:"many2many:follows;jointable_foreignkey:from_user_id;association_jointable_foreignkey:to_user_id"`
+        FavoriteArticles []Article `gorm:"many2many:favorite_articles;"`
+}
+
+// Validate validates fields of user model
+func (u User) Validate() error <span class="cov8" title="1">{
+        return validation.ValidateStruct(&amp;u,
+                validation.Field(
+                        &amp;u.Username,
+                        validation.Required,
+                        validation.Match(regexp.MustCompile("[a-zA-Z0-9]+")),
+                ),
+                validation.Field(
+                        &amp;u.Email,
+                        validation.Required,
+                        is.Email,
+                ),
+                validation.Field(
+                        &amp;u.Password,
+                        validation.Required,
+                ),
+        )
+}</span>
+
+// HashPassword makes password field crypted
+func (u *User) HashPassword() error <span class="cov8" title="1">{
+        if len(u.Password) == 0 </span><span class="cov8" title="1">{
+                return errors.New("password should not be empty")
+        }</span>
+
+        <span class="cov8" title="1">h, err := bcrypt.GenerateFromPassword([]byte(u.Password), bcrypt.DefaultCost)
+        if err != nil </span><span class="cov0" title="0">{
+                return err
+        }</span>
+        <span class="cov8" title="1">u.Password = string(h)
+
+        return nil</span>
+}
+
+// CheckPassword checki user password correct
+func (u *User) CheckPassword(plain string) bool <span class="cov8" title="1">{
+        err := bcrypt.CompareHashAndPassword([]byte(u.Password), []byte(plain))
+        return err == nil
+}</span>
+
+// ProtoUser generates proto user model from user
+func (u *User) ProtoUser(token string) *pb.User <span class="cov8" title="1">{
+        return &amp;pb.User{
+                Email:    u.Email,
+                Token:    token,
+                Username: u.Username,
+                Bio:      u.Bio,
+                Image:    u.Image,
+        }
+}</span>
+
+// ProtoProfile generates proto profile model from user
+func (u *User) ProtoProfile(following bool) *pb.Profile <span class="cov8" title="1">{
+        return &amp;pb.Profile{
+                Username:  u.Username,
+                Bio:       u.Bio,
+                Image:     u.Image,
+                Following: following,
+        }
+}</span>
+</pre>
+		
+		</div>
+	</body>
+	<script>
+	(function() {
+		var files = document.getElementById('files');
+		var visible;
+		files.addEventListener('change', onChange, false);
+		function select(part) {
+			if (visible)
+				visible.style.display = 'none';
+			visible = document.getElementById(part);
+			if (!visible)
+				return;
+			files.value = part;
+			visible.style.display = 'block';
+			location.hash = part;
+		}
+		function onChange() {
+			select(files.value);
+			window.scrollTo(0, 0);
+		}
+		if (location.hash != "") {
+			select(location.hash.substr(1));
+		}
+		if (!visible) {
+			select("file0");
+		}
+	})();
+	</script>
+</html>
